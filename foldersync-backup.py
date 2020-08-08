@@ -65,8 +65,8 @@ class FoldersyncBackup(object):
                         if os.path.isdir(path):
                             continue
 
-                        c.execute("SELECT modified_date FROM " + table_name + " WHERE rel_path='"+rel_path+"'")
-                        saved_last_modified = c.fetchall()
+                        c.execute('SELECT modified_date as "[timestamp]" FROM ' + table_name + " WHERE rel_path='"+rel_path+"'")
+                        saved_last_modified = c.fetchone()
                         print("saved_last_modified: ", saved_last_modified)
                         print(type(saved_last_modified))
 
@@ -85,8 +85,29 @@ class FoldersyncBackup(object):
                             conn.commit()
 
                         elif overwrite:
-                            # TODO: check against current modified date and potentially copy again
-                            saved_last_modified = saved_last_modified[0][0]
+                            last_modified = self.modified_date(path)
+                            saved_last_modified = saved_last_modified[0]
+                            try:
+                                saved_last_modified = datetime.datetime.strptime(saved_last_modified,
+                                                                                 "%Y-%m-%d %H:%M:%S.%f")
+                            except ValueError as err:
+                                saved_last_modified = datetime.datetime.strptime(saved_last_modified,
+                                                                                 "%Y-%m-%d %H:%M:%S")
+                            print(saved_last_modified)
+
+                            if last_modified > saved_last_modified:
+
+                                # create new directory if not exist
+                                new_rel_path = os.path.dirname(rel_path)
+                                new_dir = os.path.join(dest, new_rel_path)
+                                Path(new_dir).mkdir(parents=True, exist_ok=True)
+
+                                c.execute("UPDATE " + table_name + " SET modified_date = ? WHERE rel_path = ?",
+                                          (last_modified, rel_path))
+
+                                shutil.copy2(path, new_path)
+                                conn.commit()
+
                         else:
                             print("skipped")
 
