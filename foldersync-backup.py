@@ -45,21 +45,13 @@ class FoldersyncBackup(object):
                 # removes trailing slash
                 dest = os.path.abspath(dest)
 
-                # print(src, dest, overwrite)
-
                 for subdir, dirs, files in os.walk(src):
                     for file in files:
                         path = os.path.join(subdir, file)
-                        print()
-                        print(path)
-                        # print("subdir: ", subdir)
-                        # print("file: ", file)
                         rel_path = "".join(path.split(src+"/", 1))
-                        print("rel_path: ", rel_path)
 
                         # new path for file
                         new_path = os.path.join(dest, rel_path)
-                        print("new_path: ", new_path)
 
                         # skip if file is a folder
                         if os.path.isdir(path):
@@ -67,8 +59,6 @@ class FoldersyncBackup(object):
 
                         c.execute('SELECT modified_date as "[timestamp]" FROM ' + table_name + " WHERE rel_path='"+rel_path+"'")
                         saved_last_modified = c.fetchone()
-                        print("saved_last_modified: ", saved_last_modified)
-                        print(type(saved_last_modified))
 
                         # if there is no entry. Go ahead and copy and insert, that it was copied
                         if not saved_last_modified:
@@ -81,6 +71,7 @@ class FoldersyncBackup(object):
                             last_modified = self.modified_date(path)
                             c.execute("INSERT INTO " + table_name + " VALUES(?, ?)", (rel_path, last_modified))
 
+                            print("Copying", path, "to", new_path)
                             shutil.copy2(path, new_path)
                             conn.commit()
 
@@ -93,7 +84,6 @@ class FoldersyncBackup(object):
                             except ValueError as err:
                                 saved_last_modified = datetime.datetime.strptime(saved_last_modified,
                                                                                  "%Y-%m-%d %H:%M:%S")
-                            print(saved_last_modified)
 
                             if last_modified > saved_last_modified:
 
@@ -105,14 +95,14 @@ class FoldersyncBackup(object):
                                 c.execute("UPDATE " + table_name + " SET modified_date = ? WHERE rel_path = ?",
                                           (last_modified, rel_path))
 
+                                print("Overwriting", path, "to", new_path)
                                 shutil.copy2(path, new_path)
                                 conn.commit()
 
                         else:
-                            print("skipped")
+                            pass
+                            #print("skipped")
 
-
-            # exit(1)
             time.sleep(self.interval)
 
     """
