@@ -20,7 +20,6 @@ class FoldersyncBackup(object):
 
 
     def main(self):
-        print("main: \n")
         running = True
 
         while running:

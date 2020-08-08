@@ -1,2 +1,36 @@
 * foldersync-backup
 A tool to automatically backup synchronized folders. Without losing data. Allows modification in final directory. 
+
+This tool will copy all files (and subfolders) from the source directory to the destination directory, without deleting them in the destination. 
+Useful, for example, if you have a syncronized folder from your phone camera and want to copy all photos over. But if you deleted your pictures on the phone, they would get deleted from the synchronized directory. This keeps all photos in the destination directory. 
+
+It will save in a sqlite Database, what files it copied and won't copy them again, even if deleted or changed in source.
+Except the `overwrite_if_edited` flag is set to true. Then it will overwrite, if the source file was edited. But it wont delete, if the source file got deleted. 
+
+** config
+#+BEGIN_SRC python
+[config]
+# time in s between backup runs
+interval = 21600
+
+# replace "phone_camera" with a custom name for your copy job
+[phone_camera]
+# If a file will be overwritten in destination dir, if a file, that was already copied over, got changed in source dir.
+overwrite_if_edited = False
+# Usually a synchronized Directory from some device. For example using Syncthing.
+source = /home/user/syncthing/phone/camera
+# The final directory, where all files will be copied to.
+destination = /home/user/pictures/phone
+
+[notebook_documents]
+overwrite_if_edited = True
+source = /home/user/syncthing/notebook/documents
+destination = /home/user/documents
+#+END_SRC
+
+In the section config the interval says, how many seconds should be between synchronization runs. 
+
+You can create as many sections, as you please. 
+For every section, there must be a Source and destination directory, as well as the overwrite_if_edited flag must be set. 
+
+If the config got edited, you have to restart the program. 
